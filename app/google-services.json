@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "782595487309",
+    "project_id": "bootcamp-492cd",
+    "storage_bucket": "bootcamp-492cd.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:782595487309:android:1630724d4af0a3f6490e04",
+        "android_client_info": {
+          "package_name": "com.example.myapplication"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBL1EV_Vbmg4AoNWKQ8O-bPMkeqMC_ioD8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
