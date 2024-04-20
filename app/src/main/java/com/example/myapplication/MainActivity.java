@@ -1,5 +1,6 @@
 package com.example.myapplication;
 
+import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -11,19 +12,25 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
 
 import com.example.myapplication.databinding.ActivityMainBinding;
 
 import java.security.Permission;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
     ActivityMainBinding binding;
     private MainViewModel viewModel;
     List<Product> productList = new ArrayList<>();
+    final int NOTIFICATION_PERMISSION_CODE = 123;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,12 +38,9 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        if (Build.VERSION.SDK_INT >= 33) {
-            if (ContextCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(MainActivity.this, new String[]{android.Manifest.permission.POST_NOTIFICATIONS},101);
-            }
-            else {
-
+        if (ContextCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTIFICATION_PERMISSION_CODE);
             }
         }
         viewModel = new ViewModelProvider(this).get(MainViewModel.class);
@@ -66,11 +70,12 @@ public class MainActivity extends AppCompatActivity {
                 setupRecyclerView(products);
             }
         }));
+
     }
 
     private void setupRecyclerView(List<Product> productList) {
         RecyclerAdapter adapter = new RecyclerAdapter(this);
-
+        scheduleNotifications(productList);
         adapter.setItems(productList);
         adapter.setItemClickListener(diaryEntry -> adapter.openFragment(this, diaryEntry, getLayoutInflater()));
         binding.recycler.setAdapter(adapter);
@@ -79,5 +84,35 @@ public class MainActivity extends AppCompatActivity {
     public LocalDate convertStringToDate(String dateStr) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd:MM:yy");
         return LocalDate.parse(dateStr, formatter);
+    }
+    public void scheduleNotifications(List<Product> productList) {
+        for (Product product : productList) {
+            if (product.getFreshnessId() == 2) {
+                long delay = calculateDelay(product);
+                scheduleNotification(product, delay);
+            }
+        }
+    }
+
+    private long calculateDelay(Product product) {
+        LocalDate expirationDate = convertStringToDate(product.getData());
+        LocalDate today = LocalDate.now();
+        long daysUntilExpiration = today.until(expirationDate, ChronoUnit.DAYS);
+        return TimeUnit.DAYS.toMillis(daysUntilExpiration - 2); // Notify 2 days before expiration
+    }
+
+    private void scheduleNotification(Product product, long delay) {
+        Data inputData = new Data.Builder()
+                .putString("productName", product.getName())
+                .putString("productData", product.getData())
+                .putInt("freshnessId", product.getFreshnessId())
+                .build();
+        OneTimeWorkRequest notificationWorkRequest = new OneTimeWorkRequest.Builder(uploadWorker.class)
+                .setInitialDelay(delay, TimeUnit.MILLISECONDS)
+                .setInputData(inputData)
+                .build();
+
+        WorkManager.getInstance().enqueue(notificationWorkRequest);
+
     }
 }
