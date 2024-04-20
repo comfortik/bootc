@@ -7,6 +7,10 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -28,7 +32,6 @@ public class MainViewModel extends ViewModel {
         add = new AddUserToFirebase(fb, mAuth);
         firestoreGetId = new FirestoreGetId(fb);
     }
-
     public LiveData<List<Product>> getProductList() {
         if (productListLiveData == null) {
             productListLiveData = new MutableLiveData<>();
@@ -36,12 +39,32 @@ public class MainViewModel extends ViewModel {
         }
         return productListLiveData;
     }
-
     private void fetchData() {
         add.anonimouseSignUp();
-        add.setOnAddUserToFirestore(()-> getProducts());
-    }
+        add.setOnAddUserToFirestore(()->{
+//            firestoreGetId.getId(mAuth.getCurrentUser().getUid(), userId -> {
+//                fb.collection("Users")
+//                        .document(userId)
+//                        .collection("Products")
+//                        .add(new Product("milk", "20:04:24"));
+//            });
+//            firestoreGetId.getId(mAuth.getCurrentUser().getUid(), userId -> {
+//                fb.collection("Users")
+//                        .document(userId)
+//                        .collection("Products")
+//                        .add(new Product("juice", "12:05:24"));
+//            });
+//            firestoreGetId.getId(mAuth.getCurrentUser().getUid(), userId -> {
+//                fb.collection("Users")
+//                        .document(userId)
+//                        .collection("Products")
+//                        .add(new Product("helpmepls", "01:10:23"));
+//            });
+                    getProducts();
+                });
 
+
+    }
     private void getProducts() {
         firestoreGetId.getId(mAuth.getCurrentUser().getUid(), userId -> {
             fb.collection("Users")
@@ -52,7 +75,10 @@ public class MainViewModel extends ViewModel {
                         List<Product> productList = new ArrayList<>();
                         for (QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots) {
                             if (documentSnapshot != null) {
-                                productList.add(documentSnapshot.toObject(Product.class));
+                                Product product= documentSnapshot.toObject(Product.class);
+                                setFreshness(product);
+
+                                productList.add(product);
                             }
                         }
                         Collections.sort(productList, Comparator.comparing(Product::getData));
@@ -63,43 +89,37 @@ public class MainViewModel extends ViewModel {
                     });
         });
     }
-    public LiveData<List<Product>> getFreshProduct() {
+    public LocalDate convertStringToDate(String dateStr) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd:MM:yy");
+        return LocalDate.parse(dateStr, formatter);
+    }
+    public LiveData<List<Product>> getFreshnessProduct(int id)
+    {
         MutableLiveData<List<Product>> filteredProductLiveData = new MutableLiveData<>();
         productListLiveData.observeForever(productList -> {
             if (productList != null && !productList.isEmpty()) {
                 List<Product> filteredList = productList.stream()
-                        // Добавьте ваш фильтр здесь
-                        .filter(product -> product.getFreshnessId() == 1 /* условие фильтрации */)
+                        .filter(product -> product.getFreshnessId() == id)
                         .collect(Collectors.toList());
                 filteredProductLiveData.postValue(filteredList);
             }
         });
         return filteredProductLiveData;
+    }
+    public void setFreshness(Product product){
+        LocalDate today = LocalDate.now();
+        LocalDate srok = convertStringToDate(product.getData());
+        if(today.isAfter(srok)){
+            product.setFreshnessId(3);
+        }
+        else if(today.isAfter(srok.minusDays(3))){
+            product.setFreshnessId(2);
+        }
+        else{
+            product.setFreshnessId(1);
+        }
     }
 
-    public LiveData<List<Product>> getDeadlineProduct() {
-        MutableLiveData<List<Product>> filteredProductLiveData = new MutableLiveData<>();
-        productListLiveData.observeForever(productList -> {
-            if (productList != null && !productList.isEmpty()) {
-                List<Product> filteredList = productList.stream()
-                        .filter(product -> product.getFreshnessId() == 2)
-                        .collect(Collectors.toList());
-                filteredProductLiveData.postValue(filteredList);
-            }
-        });
-        return filteredProductLiveData;
-    }
-    public LiveData<List<Product>> getFailedProduct() {
-        MutableLiveData<List<Product>> filteredProductLiveData = new MutableLiveData<>();
-        productListLiveData.observeForever(productList -> {
-            if (productList != null && !productList.isEmpty()) {
-                List<Product> filteredList = productList.stream()
-                        // Добавьте ваш фильтр здесь
-                        .filter(product -> product.getFreshnessId() == 3)
-                        .collect(Collectors.toList());
-                filteredProductLiveData.postValue(filteredList);
-            }
-        });
-        return filteredProductLiveData;
-    }
+
+
 }

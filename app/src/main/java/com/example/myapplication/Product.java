@@ -6,9 +6,8 @@ public class Product {
 
     private String data;
 
-    public Product(String name, int freshnessId, String data){
+    public Product(String name,  String data){
         this.name= name;
-        this.freshnessId= freshnessId;
         this.data=data;
     }
     public String getData() {
@@ -32,9 +31,6 @@ public class Product {
     public int getFreshnessId() {
         return freshnessId;
     }
-    //id1- свежий
-    //2- истекает срок
-    //3- просрочен
 
     public void setFreshnessId(int freshnessId) {
         this.freshnessId = freshnessId;
