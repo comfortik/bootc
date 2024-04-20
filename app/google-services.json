@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "782595487309",
-    "project_id": "bootcamp-492cd",
-    "storage_bucket": "bootcamp-492cd.appspot.com"
+    "project_number": "114035390751",
+    "project_id": "sroki-f9cbc",
+    "storage_bucket": "sroki-f9cbc.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:782595487309:android:1630724d4af0a3f6490e04",
+        "mobilesdk_app_id": "1:114035390751:android:ca5be8a1438f8c7457d82a",
         "android_client_info": {
-          "package_name": "com.example.myapplication"
+          "package_name": "com.samsung.sroki"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBL1EV_Vbmg4AoNWKQ8O-bPMkeqMC_ioD8"
+          "current_key": "AIzaSyA7Cpk-duaoLpqaTiETE09ZmCG5zCqUykM"
         }
       ],
       "services": {
